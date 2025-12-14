@@ -41,25 +41,39 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             Expanded(
               child: Consumer<PortfolioProvider>(
                 builder: (context, provider, child) {
-                  if (provider.isLoading) {
-                    return const StockListShimmer();
-                  }
-                  
-                  if (provider.stocks.isEmpty) {
-                    return Center(
-                      child: Text(
-                        "No holdings found.",
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    );
-                  }
+                  return Stack(
+                    children: [
+                      // Layer 1: The Content (Stock List or Empty State)
+                      // We build this immediately so it's ready when we fade out the shimmer
+                      if (!provider.isLoading)
+                        provider.stocks.isEmpty
+                            ? Center(
+                                child: Text(
+                                  "No holdings found.",
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.only(top: 8, bottom: 20),
+                                itemCount: provider.stocks.length,
+                                itemBuilder: (context, index) {
+                                  return StockCard(stock: provider.stocks[index]);
+                                },
+                              ),
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.only(top: 8, bottom: 20),
-                    itemCount: provider.stocks.length,
-                    itemBuilder: (context, index) {
-                      return StockCard(stock: provider.stocks[index]);
-                    },
+                      // Layer 2: The Shimmer (Overlay)
+                      // We keep it in the tree but fade it out. 
+                      // IgnorePointer ensures clicks pass through once invisible.
+                      IgnorePointer(
+                        ignoring: !provider.isLoading,
+                        child: AnimatedOpacity(
+                          opacity: provider.isLoading ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                          child: const StockListShimmer(),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -69,6 +83,8 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       ),
     );
   }
+
+
 
   Widget _buildHeader(BuildContext context, NumberFormat currencyFormat) {
     return Padding(
@@ -80,7 +96,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Portfolio Simulator",
+                "Portfolio Simulator (Live)",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -96,39 +112,40 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           const SizedBox(height: 20),
           
           // Total Value Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).primaryColor,
-                  Theme.of(context).primaryColor.withOpacity(0.8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).primaryColor.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Consumer<PortfolioProvider>(
-              builder: (context, provider, _) {
-                if (provider.isLoading) {
-                  return const Center(child: CircularProgressIndicator(color: Colors.white));
-                }
-                
-                final totalValue = provider.totalPortfolioValue;
-                final totalPnL = provider.totalPnL;
-                final totalPnLPercent = provider.totalPnLPercent;
-                final isProfit = totalPnL >= 0;
+          Consumer<PortfolioProvider>(
+            builder: (context, provider, _) {
+              if (provider.isLoading) {
+                 // Header Shimmer State
+                 return _buildHeaderShimmer(context);
+              }
+              
+              final totalValue = provider.totalPortfolioValue;
+              final totalPnL = provider.totalPnL;
+              final totalPnLPercent = provider.totalPnLPercent;
+              final isProfit = totalPnL >= 0;
 
-                return Column(
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withOpacity(0.8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).primaryColor.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
@@ -139,29 +156,28 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            currencyFormat.format(totalValue),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          currencyFormat.format(totalValue),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
                           ),
-                          // Mini Graph for Header
-                          MiniSparkline(
-                            data: provider.portfolioHistory,
-                            isProfit: isProfit,
-                            width: 80,
-                            height: 40,
-                            color: Colors.white.withOpacity(0.8), // Neutral/Light color for header
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                        ),
+                        MiniSparkline(
+                          data: provider.portfolioHistory,
+                          isProfit: isProfit,
+                          width: 80,
+                          height: 40,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Container(
@@ -191,12 +207,24 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                       ],
                     ),
                   ],
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeaderShimmer(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 200, // Approximate height of the real card
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: const ShimmerLoading.rectangular(height: 200, shapeBorder: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(24)))),
     );
   }
 }

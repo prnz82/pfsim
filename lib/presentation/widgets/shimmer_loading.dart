@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_colors.dart';
 
-class ShimmerLoading extends StatelessWidget {
+class ShimmerLoading extends StatefulWidget {
   final double width;
   final double height;
   final ShapeBorder shapeBorder;
@@ -22,21 +21,46 @@ class ShimmerLoading extends StatelessWidget {
   });
 
   @override
+  State<ShimmerLoading> createState() => _ShimmerLoadingState();
+}
+
+class _ShimmerLoadingState extends State<ShimmerLoading> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    
+    // Animate opacity from 0.4 to 1.0
+    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Detect theme brightness for appropriate shimmer colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = isDark ? AppColors.darkShimmerBase : AppColors.shimmerBase;
-    final highlightColor = isDark ? AppColors.darkShimmerHighlight : AppColors.shimmerHighlight;
 
-    return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
+    return FadeTransition(
+      opacity: _animation,
       child: Container(
-        width: width,
-        height: height,
+        width: widget.width,
+        height: widget.height,
         decoration: ShapeDecoration(
           color: baseColor,
-          shape: shapeBorder,
+          shape: widget.shapeBorder,
         ),
       ),
     );
