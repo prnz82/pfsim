@@ -18,7 +18,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider( create: (_) => PortfolioProvider()..fetchPortfolio()),
+        ChangeNotifierProvider(create: (_) => PortfolioProvider()),
       ],
       child: const PortfolioApp(),
     ),

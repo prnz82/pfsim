@@ -6,7 +6,7 @@ class PortfolioProvider extends ChangeNotifier {
   final StockService _stockService = StockService();
   
   List<Stock> _stocks = [];
-  bool _isLoading = false;
+  bool _isLoading = true; // Start loading by default to prevent "No Data" flash
   final Set<String> _starredSymbols = {};
 
   List<Stock> get stocks => _stocks;

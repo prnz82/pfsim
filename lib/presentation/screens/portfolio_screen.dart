@@ -9,8 +9,22 @@ import '../../core/theme/app_colors.dart';
 import '../widgets/hover_scale.dart';
 import '../widgets/mini_sparkline.dart';
 
-class PortfolioScreen extends StatelessWidget {
+class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key});
+
+  @override
+  State<PortfolioScreen> createState() => _PortfolioScreenState();
+}
+
+class _PortfolioScreenState extends State<PortfolioScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data after the widget is mounted to ensure Shimmer is seen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PortfolioProvider>().fetchPortfolio();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
