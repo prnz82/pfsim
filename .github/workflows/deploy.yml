@@ -32,7 +32,7 @@ jobs:
       # Build with the correct base-href for GitHub Pages
       # This dynamically grabs the repository name (e.g., /my-repo/) to set the path correctly.
       - name: Build Web
-        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/" --web-renderer canvaskit
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
