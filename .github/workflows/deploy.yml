@@ -24,15 +24,15 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.0'
           channel: 'stable'
           
       - name: Get Dependencies
         run: flutter pub get
 
-      # Build with the correct base-href for GitHub Pages
-      # This dynamically grabs the repository name (e.g., /my-repo/) to set the path correctly.
+      # Build with CanvasKit renderer to match local debug behavior
       - name: Build Web
-        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+        run: flutter build web --release --web-renderer canvaskit --base-href "/${{ github.event.repository.name }}/"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
