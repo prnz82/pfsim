@@ -55,6 +55,19 @@ class Stock {
       insight: json['insight'] ?? '',
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'symbol': symbol,
+      'companyName': companyName,
+      'logoUrl': logoUrl,
+      'qty': qty,
+      'avgPrice': avgPrice,
+      'currentPrice': currentPrice,
+      'changes': changes.toJson(),
+      'history': history,
+      'insight': insight,
+    };
+  }
 }
 
 class StockChanges {
@@ -74,5 +87,13 @@ class StockChanges {
       week: (json['week'] ?? 0).toDouble(),
       month: (json['month'] ?? 0).toDouble(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'day': day,
+      'week': week,
+      'month': month,
+    };
   }
 }

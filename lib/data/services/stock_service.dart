@@ -1,10 +1,45 @@
 import 'dart:math';
 import '../models/stock.dart';
 
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class StockService {
   Future<List<Stock>> getHoldings() async {
+    final prefs = await SharedPreferences.getInstance();
+    const String cacheKey = 'portfolio_cache';
+
+    // 1. Try to read from cache
+    final String? cachedJson = prefs.getString(cacheKey);
+    if (cachedJson != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(cachedJson);
+        final stocks = decoded.map((json) => Stock.fromJson(json)).toList();
+        debugPrint("💰 CACHE HIT: Loaded ${stocks.length} stocks from local storage.");
+        return stocks;
+      } catch (e) {
+        debugPrint("⚠️ CACHE ERROR: $e");
+      }
+    } else {
+        debugPrint("⚠️ CACHE MISS: No local data found.");
+    }
+
+    // 2. Simulate Network & Fetch
+    debugPrint("🌐 NETWORK FETCH: Simulating 1s delay...");
     await Future.delayed(const Duration(seconds: 1)); // Fake network delay
-    return _mockData;
+    final freshData = _mockData;
+
+    // 3. Save to cache
+    try {
+      final String jsonString = jsonEncode(freshData.map((e) => e.toJson()).toList());
+      await prefs.setString(cacheKey, jsonString);
+      debugPrint("💾 CACHE SAVED: Persisted data to local storage.");
+    } catch (e) {
+      debugPrint("❌ CACHE WRITE ERROR: $e");
+    }
+
+    return freshData;
   }
 
   // Generate history WALKING BACKWARDS from current price to ensure consistency
